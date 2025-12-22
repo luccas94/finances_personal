@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "verify": "npm run lint && npm run typecheck && npm run build",
+    "ci": "npm run verify"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.0.0",
@@ -23,5 +26,8 @@
     "eslint": "^8.46.0",
     "eslint-config-next": "^13.4.19",
     "typescript": "^5.1.6"
+  },
+  "engines": {
+    "node": "20.x"
   }
 }

@@ -6,11 +6,44 @@ export default function DespesaForm(){
   const [valor, setValor] = useState('')
   const [descricao, setDescricao] = useState('')
   const [categoria, setCategoria] = useState('')
+  const [categoriaId, setCategoriaId] = useState<number | null>(null)
+  const [parentCategoria, setParentCategoria] = useState('')
+  const [parentId, setParentId] = useState<number | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent){
     e.preventDefault()
-    // TODO: enviar para Supabase
-    alert('Enviar despesa: ' + descricao + ' R$ ' + valor)
+    setMessage(null)
+    setLoading(true)
+    try{
+      const num = Number(String(valor).replace(',', '.')) || 0
+      // try get user id
+      const { data: userData } = await (await import('../lib/supabaseClient')).supabase.auth.getUser()
+      const userId = (userData as any)?.user?.id ?? null
+
+      const insertPayload: any = {
+        user_id: userId,
+        valor: num,
+        descricao,
+        categoria: parentCategoria || categoria || null,
+        subcategoria: categoria || null,
+        categoria_id: categoriaId ?? null,
+        subcategoria_id: categoriaId ?? null,
+        estabelecimento: null,
+        criado_em: new Date().toISOString().slice(0,10)
+      }
+
+      const { data, error } = await (await import('../lib/supabaseClient')).supabase.from('despesas').insert(insertPayload)
+      if (error) throw error
+      setMessage('Despesa salva com sucesso')
+      setValor('')
+      setDescricao('')
+      setCategoria('')
+    }catch(err:any){
+      console.error(err)
+      setMessage('Erro ao salvar: ' + (err.message || String(err)))
+    }finally{ setLoading(false) }
   }
 
   return (
@@ -22,10 +55,11 @@ export default function DespesaForm(){
       <input className="input" placeholder="Descrição do estabelecimento" value={descricao} onChange={e=>setDescricao(e.target.value)} />
 
       <label className="text-xs muted">Categoria</label>
-      <CategoriaSelect value={categoria} onChange={setCategoria} />
+      <CategoriaSelect value={categoria} onChange={(v, id)=>{ setCategoria(v); setCategoriaId(id ?? null) }} onParentChange={(v,id)=>{ setParentCategoria(v); setParentId(id ?? null) }} />
 
+      {message && <div className="text-sm muted">{message}</div>}
       <div>
-        <button className="btn-primary" type="submit" style={{width:'100%'}}>Salvar despesa</button>
+        <button className="btn-primary" type="submit" style={{width:'100%'}} disabled={loading}>{loading ? 'Salvando...' : 'Salvar despesa'}</button>
       </div>
     </form>
   )
