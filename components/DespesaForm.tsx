@@ -38,12 +38,21 @@ export default function DespesaForm(){
         criado_em: new Date().toISOString()
       }
 
-      const { data, error } = await (await import('../lib/supabaseClient')).supabase.from('despesas').insert(insertPayload)
+      const { data: inserted, error } = await (await import('../lib/supabaseClient')).supabase.from('despesas').insert(insertPayload).select().single()
       if (error) throw error
+      // if the returned row doesn't have `data`, update explicitly to ensure date is saved
+      const saved: any = inserted
+      if (!saved?.data) {
+        const { error: updErr } = await (await import('../lib/supabaseClient')).supabase.from('despesas').update({ data: localDate }).eq('id', saved.id)
+        if (updErr) throw updErr
+      }
       setMessage('Despesa salva com sucesso')
       setValor('')
       setDescricao('')
       setCategoria('')
+      setCategoriaId(null)
+      setParentCategoria('')
+      setParentId(null)
     }catch(err:any){
       console.error(err)
       setMessage('Erro ao salvar: ' + (err.message || String(err)))
