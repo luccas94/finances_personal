@@ -130,7 +130,7 @@ export default function CategoryTable({ items }: { items: Item[] }){
                               </button>
                             </div>
                           </div>
-                          {open[cat] && open[cat][sub] && (
+                          {subOpen[cat] && subOpen[cat][sub] && (
                             <div className="mt-2 overflow-x-auto">
                               <table className="w-full text-left table-fixed">
                                 <colgroup>
