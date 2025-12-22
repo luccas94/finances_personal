@@ -56,24 +56,29 @@ export default function CategoryTable({ items }: { items: Item[] }){
               </div>
             </div>
             {open[cat] && (
-              <div className="mt-3 border-t pt-3">
-                <div className="overflow-x-auto">
-                <table className="w-full text-left min-w-[640px]">
+              <div className="mt-3 border-t pt-3 overflow-x-auto">
+                <table className="w-full text-left table-fixed">
+                  <colgroup>
+                    <col style={{width: '90px'}} />
+                    <col style={{width: '120px'}} />
+                    <col />
+                    <col style={{width: '96px'}} />
+                  </colgroup>
                   <thead>
                     <tr className="text-sm muted">
-                      <th>Data</th>
-                      <th>Estabelecimento</th>
-                      <th>Descrição</th>
-                      <th className="text-right">Valor</th>
+                      <th className="px-2">Data</th>
+                      <th className="px-2">Estabelecimento</th>
+                      <th className="px-2">Descrição</th>
+                      <th className="px-2 text-right">Valor</th>
                     </tr>
                   </thead>
                   <tbody>
                     {(detailsByCategory[cat]||[]).map(row => (
                       <tr key={row.id} className="align-top border-b last:border-b-0">
-                        <td className="py-2 text-sm muted">{row.data ?? '-'}</td>
-                        <td className="py-2 text-sm">{row.estabelecimento ?? '-'}</td>
-                        <td className="py-2 text-sm muted">{row.descricao ?? ''} {row.subcategoria ? `· ${row.subcategoria}` : ''}</td>
-                        <td className="py-2 text-sm text-right">R$ {Number(row.valor || 0).toFixed(2)}</td>
+                        <td className="py-1 px-2 text-sm muted whitespace-nowrap">{row.data ?? '-'}</td>
+                        <td className="py-1 px-2 text-sm truncate overflow-hidden whitespace-nowrap">{row.estabelecimento ?? '-'}</td>
+                        <td className="py-1 px-2 text-sm muted truncate overflow-hidden whitespace-nowrap">{row.descricao ?? ''} {row.subcategoria ? `· ${row.subcategoria}` : ''}</td>
+                        <td className="py-1 px-2 text-sm text-right whitespace-nowrap">R$ {Number(row.valor || 0).toFixed(2)}</td>
                       </tr>
                     ))}
                   </tbody>
