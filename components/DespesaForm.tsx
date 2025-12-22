@@ -37,7 +37,8 @@ export default function DespesaForm(){
         data: selectedDate,
         categoria: parentCategoria || categoria || null,
         subcategoria: categoria || null,
-        categoria_id: categoriaId ?? null,
+        // store IDs: prefer parentId for categoria_id, and categoriaId for subcategoria_id
+        categoria_id: parentId ?? categoriaId ?? null,
         subcategoria_id: categoriaId ?? null,
         estabelecimento: null,
         criado_em: new Date().toISOString()
