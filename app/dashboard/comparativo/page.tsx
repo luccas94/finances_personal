@@ -49,9 +49,18 @@ export default function ComparativoPage(){
         })
 
         ;(data||[]).forEach((row:any) => {
-          const d = new Date(row.data)
-          const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`
-          if (!(key in totals)) return
+          // parse date as local to avoid timezone shifts that can move dates into previous month
+        let d: Date | null = null
+        if (!row?.data) return
+        if (typeof row.data === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(row.data)){
+          const [yy, mm, dd] = row.data.split('-').map(v => Number(v))
+          d = new Date(yy, mm - 1, dd)
+        } else {
+          d = new Date(row.data)
+        }
+        if (isNaN(d.getTime())) return
+        const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`
+        if (!(key in totals)) return
           const valor = Number(row.valor || 0)
           totals[key] += valor
           // map to parent category
