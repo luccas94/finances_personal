@@ -36,11 +36,18 @@ export default function CategoryTable({ items }: { items: Item[] }){
         const rows = (data||[]) as Array<{id:number,nome:string,parent_id:number|null}>
         const parents = rows.filter(r=>r.parent_id===null)
         const map: Record<string,string[]> = {}
+        const reverse: Record<string,string> = {}
         parents.forEach(p => {
-          const subs = rows.filter(s => s.parent_id === p.id).map(s => s.nome.toUpperCase())
+          const subs = rows.filter(s => s.parent_id === p.id).map(s => {
+            const upper = s.nome.toUpperCase()
+            reverse[upper] = p.nome.toUpperCase()
+            return upper
+          })
           map[p.nome.toUpperCase()] = subs
         })
         setCatMap(map)
+        // attach reverse map to window for use in grouping logic (small hack without changing state types)
+        ;(window as any).__CAT_REVERSE__ = reverse
       }catch(err){
         // silent fail — keep static mapping
         console.error('failed to load categories', err)
@@ -54,7 +61,13 @@ export default function CategoryTable({ items }: { items: Item[] }){
   const detailsByCategory: Record<string, Item[]> = {}
 
   items.forEach(it => {
-    const cat = (it.categoria || 'Sem categoria').toUpperCase()
+    let cat = (it.categoria || 'Sem categoria').toUpperCase()
+    // if the stored `categoria` is actually a subcategory, map it to its parent when possible
+    const reverse = (window as any).__CAT_REVERSE__ as Record<string,string> | undefined
+    if (reverse && !Object.keys(STATIC_CATEGORIES).map(k=>k.toUpperCase()).includes(cat)){
+      const mapped = reverse[cat]
+      if (mapped) cat = mapped
+    }
     totalsByCategory[cat] = (totalsByCategory[cat] || 0) + Number(it.valor || 0)
     detailsByCategory[cat] = detailsByCategory[cat] || []
     detailsByCategory[cat].push(it)
@@ -89,7 +102,16 @@ export default function CategoryTable({ items }: { items: Item[] }){
                   const subTotals: Record<string, number> = {}
                   const subDetails: Record<string, Item[]> = {}
                   rows.forEach(r => {
-                    const sub = (r.subcategoria || 'Sem subcategoria').toString()
+                    // prefer explicit subcategoria; otherwise if categoria value is actually a subcategory, use it
+                    let sub: string | null = r.subcategoria ? r.subcategoria.toString() : null
+                    if (!sub){
+                      const catVal = (r.categoria || '').toString().toUpperCase()
+                      const reverse = (window as any).__CAT_REVERSE__ as Record<string,string> | undefined
+                      if (reverse && reverse[catVal]){
+                        sub = r.categoria?.toString() || 'Sem subcategoria'
+                      }
+                    }
+                    if (!sub) sub = 'Sem subcategoria'
                     subTotals[sub] = (subTotals[sub] || 0) + Number(r.valor || 0)
                     subDetails[sub] = subDetails[sub] || []
                     subDetails[sub].push(r)
@@ -108,7 +130,7 @@ export default function CategoryTable({ items }: { items: Item[] }){
                               </button>
                             </div>
                           </div>
-                          {open[cat] && open[cat][sub] && (
+                          {subOpen[cat] && subOpen[cat][sub] && (
                             <div className="mt-2 overflow-x-auto">
                               <table className="w-full text-left table-fixed">
                                 <colgroup>
