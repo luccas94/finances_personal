@@ -15,7 +15,7 @@ function formatMonthLabel(date: Date){
   return date.toLocaleString(undefined, { month: 'short', year: '2-digit' })
 }
 
-function monthsArray(count=12){
+function monthsArray(count=6){
   const arr: Date[] = []
   const now = new Date()
   for(let i = count-1; i>=0; i--){
@@ -73,7 +73,7 @@ export default function ComparativoPage(){
     load()
   }, [])
 
-  const months = monthsArray(12)
+  const months = monthsArray()
   const keys = months.map(m => `${m.getFullYear()}-${String(m.getMonth()+1).padStart(2,'0')}`)
   const max = Math.max(...keys.map(k=>Number(dataByMonth[k]||0)), 1)
 
@@ -82,7 +82,7 @@ export default function ComparativoPage(){
 
   return (
     <section>
-      <h2 className="text-xl font-semibold mb-4">Comparativo Mensal — Últimos 12 meses</h2>
+      <h2 className="text-xl font-semibold mb-4">Comparativo Mensal — Últimos 6 meses</h2>
       {loading ? <p className="muted">Carregando...</p> : (
         <div>
           <div className="mb-3 text-sm muted">Totais por mês (clique em 'Voltar' no navegador para sair)</div>
