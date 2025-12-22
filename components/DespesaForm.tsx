@@ -22,16 +22,20 @@ export default function DespesaForm(){
       const { data: userData } = await (await import('../lib/supabaseClient')).supabase.auth.getUser()
       const userId = (userData as any)?.user?.id ?? null
 
+      const today = new Date()
+      const localDate = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`
+
       const insertPayload: any = {
         user_id: userId,
         valor: num,
         descricao,
+        data: localDate,
         categoria: parentCategoria || categoria || null,
         subcategoria: categoria || null,
         categoria_id: categoriaId ?? null,
         subcategoria_id: categoriaId ?? null,
         estabelecimento: null,
-        criado_em: new Date().toISOString().slice(0,10)
+        criado_em: new Date().toISOString()
       }
 
       const { data, error } = await (await import('../lib/supabaseClient')).supabase.from('despesas').insert(insertPayload)
