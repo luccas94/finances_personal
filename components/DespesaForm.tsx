@@ -35,8 +35,10 @@ export default function DespesaForm(){
         valor: num,
         descricao,
         data: selectedDate,
-        categoria: parentCategoria || categoria || null,
-        subcategoria: categoria || null,
+        // If a parent was explicitly selected, store it as categoria and the selected sub as subcategoria.
+        // Otherwise fall back to whatever was provided in `categoria` (which may be a standalone category).
+        categoria: parentId ? parentCategoria : (categoria || null),
+        subcategoria: categoriaId ? categoria : null,
         // store IDs: prefer parentId for categoria_id, and categoriaId for subcategoria_id
         categoria_id: parentId ?? categoriaId ?? null,
         subcategoria_id: categoriaId ?? null,
