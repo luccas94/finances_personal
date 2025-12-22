@@ -1,5 +1,5 @@
 "use client"
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 type Item = {
   id: string
@@ -11,7 +11,10 @@ type Item = {
   estabelecimento?: string | null
 }
 
-const CATEGORIES: Record<string, string[]> = {
+import supabase from '../lib/supabaseClient'
+
+// fallback static mapping (kept for compatibility) — dynamic data from DB will override when available
+const STATIC_CATEGORIES: Record<string, string[]> = {
   'ALIMENTAÇÃO': ['IFOOD','MERCADO','RESTAURANTES','BARES'],
   'LAZER': ['TABACO/SEDA','DISTRIBUIDORA'],
   'CARRO': ['COMBUSTIVEL','MANUTENÇÃO','ESTACIONAMENTO','LAVA CAR'],
@@ -22,6 +25,28 @@ const CATEGORIES: Record<string, string[]> = {
 
 export default function CategoryTable({ items }: { items: Item[] }){
   const [open, setOpen] = useState<Record<string, boolean>>({})
+  const [catMap, setCatMap] = useState<Record<string, string[]>>({})
+
+  useEffect(() => {
+    async function loadCats(){
+      try{
+        const { data, error } = await supabase.from('categorias').select('id,nome,parent_id')
+        if (error) throw error
+        const rows = (data||[]) as Array<{id:number,nome:string,parent_id:number|null}>
+        const parents = rows.filter(r=>r.parent_id===null)
+        const map: Record<string,string[]> = {}
+        parents.forEach(p => {
+          const subs = rows.filter(s => s.parent_id === p.id).map(s => s.nome.toUpperCase())
+          map[p.nome.toUpperCase()] = subs
+        })
+        setCatMap(map)
+      }catch(err){
+        // silent fail — keep static mapping
+        console.error('failed to load categories', err)
+      }
+    }
+    loadCats()
+  }, [])
 
   // compute totals
   const totalsByCategory: Record<string, number> = {}
@@ -34,13 +59,14 @@ export default function CategoryTable({ items }: { items: Item[] }){
     detailsByCategory[cat].push(it)
   })
 
-  const categories = Object.keys(CATEGORIES).concat(Object.keys(totalsByCategory).filter(c=>!Object.keys(CATEGORIES).includes(c)))
+  const knownParents = new Set([...Object.keys(STATIC_CATEGORIES), ...Object.keys(catMap)])
+  const categories = Array.from(new Set([...Array.from(knownParents), ...Object.keys(totalsByCategory)]))
 
   return (
     <div className="space-y-3">
       {categories.map(cat => {
         const total = totalsByCategory[cat] ?? 0
-        const subcats = CATEGORIES[cat] ?? []
+        const subcats = catMap[cat] ?? STATIC_CATEGORIES[cat] ?? []
         return (
           <div key={cat} className="card">
               <div className="collapse-header">
