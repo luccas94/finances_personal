@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { parsePdf } from '../../../lib/pdfParser'
+import { parsePdf } from '../../lib/pdfParser'
 
 export async function POST(request: Request) {
   try {
