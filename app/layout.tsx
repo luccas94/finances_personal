@@ -21,7 +21,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className="min-h-screen bg-iphone text-iphone-900">
         <div className="safe-area">
           <Header />
-          <main className="container py-6">{children}</main>
+          <main className="container py-6 main-content">{children}</main>
           <BottomNav />
         </div>
       </body>

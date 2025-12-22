@@ -57,7 +57,8 @@ export default function CategoryTable({ items }: { items: Item[] }){
             </div>
             {open[cat] && (
               <div className="mt-3 border-t pt-3">
-                <table className="w-full text-left">
+                <div className="overflow-x-auto">
+                <table className="w-full text-left min-w-[640px]">
                   <thead>
                     <tr className="text-sm muted">
                       <th>Data</th>
@@ -77,6 +78,7 @@ export default function CategoryTable({ items }: { items: Item[] }){
                     ))}
                   </tbody>
                 </table>
+                </div>
               </div>
             )}
           </div>
