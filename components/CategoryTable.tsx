@@ -72,7 +72,6 @@ export default function CategoryTable({ items }: { items: Item[] }){
               <div className="collapse-header">
               <div>
                 <div className="font-semibold">{cat}</div>
-                {subcats.length>0 && <div className="text-sm muted">{subcats.join(' • ')}</div>}
               </div>
               <div className="flex items-center gap-3">
                 <div className="font-bold">R$ {total.toFixed(2)}</div>
