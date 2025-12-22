@@ -60,14 +60,12 @@ export default function CategoryTable({ items }: { items: Item[] }){
                 <table className="w-full text-left table-fixed">
                   <colgroup>
                     <col style={{width: '90px'}} />
-                    <col style={{width: '120px'}} />
                     <col />
                     <col style={{width: '96px'}} />
                   </colgroup>
                   <thead>
                     <tr className="text-sm muted">
                       <th className="px-2">Data</th>
-                      <th className="px-2">Estabelecimento</th>
                       <th className="px-2">Descrição</th>
                       <th className="px-2 text-right">Valor</th>
                     </tr>
@@ -76,14 +74,12 @@ export default function CategoryTable({ items }: { items: Item[] }){
                     {(detailsByCategory[cat]||[]).map(row => (
                       <tr key={row.id} className="align-top border-b last:border-b-0">
                         <td className="py-1 px-2 text-sm muted whitespace-nowrap">{row.data ?? '-'}</td>
-                        <td className="py-1 px-2 text-sm truncate overflow-hidden whitespace-nowrap">{row.estabelecimento ?? '-'}</td>
                         <td className="py-1 px-2 text-sm muted truncate overflow-hidden whitespace-nowrap">{row.descricao ?? ''} {row.subcategoria ? `· ${row.subcategoria}` : ''}</td>
                         <td className="py-1 px-2 text-sm text-right whitespace-nowrap">R$ {Number(row.valor || 0).toFixed(2)}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-                </div>
               </div>
             )}
           </div>
