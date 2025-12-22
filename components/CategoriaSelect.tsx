@@ -45,7 +45,16 @@ export default function CategoriaSelect({ value, onChange, onParentChange }:{ va
 
       <select className="input" value={value ?? ''} onChange={e=>{
         const val = e.target.value
-        const selected = subs.find(s=>s.nome===val)
+        // find selected subcategory from full list (not only current subs) to be robust
+        const selected = cats.find(c => c.nome === val)
+        // if found, ensure parent is selected in UI and notify parent handler
+        if (selected && selected.parent_id) {
+          const parent = parents.find(p=>p.id===selected.parent_id)
+          if (parent){
+            setSelectedParent(parent.id)
+            if (onParentChange) onParentChange(parent.nome, parent.id)
+          }
+        }
         onChange(val, selected?.id)
       }} disabled={subs.length===0}>
         <option value="">— Selecione subcategoria —</option>
