@@ -163,6 +163,15 @@ INSERT INTO categorias (nome, slug, parent_id) VALUES
   ('COMPRAS GERAIS','compras_gerais', (SELECT id FROM categorias WHERE slug='diversos'))
   ON CONFLICT DO NOTHING;
 
+-- Add new GATOS category and PETLOVE subcategory
+INSERT INTO categorias (nome, slug, parent_id) VALUES
+  ('GATOS','gatos', NULL)
+  ON CONFLICT DO NOTHING;
+
+INSERT INTO categorias (nome, slug, parent_id) VALUES
+  ('PETLOVE - VETERINARIO','petlove_veterinario', (SELECT id FROM categorias WHERE slug='gatos'))
+  ON CONFLICT DO NOTHING;
+
 -- Example query: totals per category (top-level)
 -- SELECT c.nome, SUM(d.valor) as total
 -- FROM categorias c
