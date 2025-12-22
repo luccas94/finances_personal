@@ -5,6 +5,10 @@ import CategoriaSelect from './CategoriaSelect'
 export default function DespesaForm(){
   const [valor, setValor] = useState('')
   const [descricao, setDescricao] = useState('')
+  const [dataDespesa, setDataDespesa] = useState<string>(() => {
+    const t = new Date()
+    return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`
+  })
   const [categoria, setCategoria] = useState('')
   const [categoriaId, setCategoriaId] = useState<number | null>(null)
   const [parentCategoria, setParentCategoria] = useState('')
@@ -22,24 +26,39 @@ export default function DespesaForm(){
       const { data: userData } = await (await import('../lib/supabaseClient')).supabase.auth.getUser()
       const userId = (userData as any)?.user?.id ?? null
 
+      const today = new Date()
+      const fallbackLocalDate = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`
+      const selectedDate = dataDespesa || fallbackLocalDate
+
       const insertPayload: any = {
         user_id: userId,
         valor: num,
         descricao,
+        data: selectedDate,
         categoria: parentCategoria || categoria || null,
         subcategoria: categoria || null,
         categoria_id: categoriaId ?? null,
         subcategoria_id: categoriaId ?? null,
         estabelecimento: null,
-        criado_em: new Date().toISOString().slice(0,10)
+        criado_em: new Date().toISOString()
       }
 
-      const { data, error } = await (await import('../lib/supabaseClient')).supabase.from('despesas').insert(insertPayload)
+      const { data: inserted, error } = await (await import('../lib/supabaseClient')).supabase.from('despesas').insert(insertPayload).select().single()
       if (error) throw error
+      // if the returned row doesn't have `data`, update explicitly to ensure date is saved
+      const saved: any = inserted
+      if (!saved?.data) {
+        const { error: updErr } = await (await import('../lib/supabaseClient')).supabase.from('despesas').update({ data: selectedDate }).eq('id', saved.id)
+        if (updErr) throw updErr
+      }
       setMessage('Despesa salva com sucesso')
       setValor('')
       setDescricao('')
+      setDataDespesa(fallbackLocalDate)
       setCategoria('')
+      setCategoriaId(null)
+      setParentCategoria('')
+      setParentId(null)
     }catch(err:any){
       console.error(err)
       setMessage('Erro ao salvar: ' + (err.message || String(err)))
@@ -53,6 +72,9 @@ export default function DespesaForm(){
 
       <label className="text-xs muted">Descrição</label>
       <input className="input" placeholder="Descrição do estabelecimento" value={descricao} onChange={e=>setDescricao(e.target.value)} />
+
+      <label className="text-xs muted">Data</label>
+      <input type="date" className="input" value={dataDespesa} onChange={e=>setDataDespesa(e.target.value)} />
 
       <label className="text-xs muted">Categoria</label>
       <CategoriaSelect value={categoria} onChange={(v, id)=>{ setCategoria(v); setCategoriaId(id ?? null) }} onParentChange={(v,id)=>{ setParentCategoria(v); setParentId(id ?? null) }} />
