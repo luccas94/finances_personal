@@ -19,3 +19,4 @@ pnpm-debug.log*
 .pnp.js
 public/icon-*.png
 public/*.webmanifest
+.vercel

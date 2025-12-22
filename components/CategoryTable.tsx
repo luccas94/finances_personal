@@ -101,33 +101,38 @@ export default function CategoryTable({ items, refreshItems }: { items: Item[], 
   const _seen = new Set<string>()
   parents.forEach(p => { if (!_seen.has(p)) { _seen.add(p); uniqueParents.push(p) } })
 
-  // Merge parents by display name to avoid duplicates that differ only by normalization
-  const mergedByDisplay: Record<string, { total: number, rows: Item[] }> = {}
+  // Merge parents by display name using normalized display keys to avoid duplicates
+  const mergedByDisplayKey: Record<string, { label: string, total: number, rows: Item[], sources: string[] }> = {}
   uniqueParents.forEach(parent => {
     const displayName = (typeof window !== 'undefined' && (window as any).__CAT_DISPLAY__ && (window as any).__CAT_DISPLAY__[parent]) || displayNameMap[parent] || parent
-    if (!mergedByDisplay[displayName]) mergedByDisplay[displayName] = { total: 0, rows: [] }
-    mergedByDisplay[displayName].total += (totalsByCategory[parent] || 0)
-    mergedByDisplay[displayName].rows.push(...(detailsByCategory[parent] || []))
+    const displayKey = normalizeKey(displayName)
+    if (!mergedByDisplayKey[displayKey]) mergedByDisplayKey[displayKey] = { label: displayName, total: 0, rows: [], sources: [] }
+    mergedByDisplayKey[displayKey].total += (totalsByCategory[parent] || 0)
+    mergedByDisplayKey[displayKey].rows.push(...(detailsByCategory[parent] || []))
+    mergedByDisplayKey[displayKey].sources.push(parent)
   })
 
-  const mergedParents = Object.keys(mergedByDisplay).map(name => ({ name, total: mergedByDisplay[name].total, rows: mergedByDisplay[name].rows }))
+  const mergedParents = Object.keys(mergedByDisplayKey).map(k => ({ key: k, name: mergedByDisplayKey[k].label.trim(), total: mergedByDisplayKey[k].total, rows: mergedByDisplayKey[k].rows, sources: Array.from(new Set(mergedByDisplayKey[k].sources)) }))
 
   // client-side diagnostic logging to investigate duplication in production
   if (typeof window !== 'undefined') {
     try {
-      const counts: Record<string, number> = {}
-      mergedParents.forEach(p => counts[p.name] = (counts[p.name] || 0) + 1)
-      const dupes = Object.entries(counts).filter(([,c])=>c>1)
-      if (dupes.length) console.warn('CategoryTable duplicate parents after merge', dupes)
-      // print a compact report: parent display name + count + first 5 ids under it
-      const byCounts: Record<string, {count:number, ids:string[]}> = {}
-      mergedParents.forEach(p => { byCounts[p.name] = { count: (p.rows||[]).length, ids: (p.rows||[]).slice(0,5).map(r=>r.id) } })
-      console.info('CategoryTable report (merged)', { parents: mergedParents.map(p=>p.name), totals: Object.keys(totalsByCategory).length, details: byCounts })
+      // report mapping from normalized display keys -> label, source parents, count
+      const report = mergedParents.map(p => ({ key: p.key, name: p.name, sources: p.sources, count: (p.rows||[]).length }))
+      // find any keys that accidentally map to same label when trimmed/uppercased
+      const labelCounts: Record<string, number> = {}
+      report.forEach(r => { const lab = (r.name||'').toString().trim().toUpperCase(); labelCounts[lab] = (labelCounts[lab]||0) + 1 })
+      const labelDupes = Object.entries(labelCounts).filter(([,c])=>c>1)
+      if (labelDupes.length) console.warn('CategoryTable label duplicates detected', labelDupes)
+      console.info('CategoryTable report (mergedKey)', { parents: report, totalsCount: Object.keys(totalsByCategory).length })
     } catch (e){ console.error('CategoryTable diagnostic error', e) }
   }
 
   const [editingRow, setEditingRow] = useState<Item | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  // small UI toggle for exposing a debug panel when url contains ?debugCats=1
+  const [showDebugPanel, setShowDebugPanel] = useState<boolean>(() => (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('debugCats') === '1'))
 
   async function handleDelete(row: Item){
     try{
@@ -163,7 +168,7 @@ export default function CategoryTable({ items, refreshItems }: { items: Item[], 
           <div key={parent} className="card category-card">
             <div className="collapse-header cursor-pointer" onClick={() => setOpen(prev => ({...prev, [parent]: !prev[parent]}))}>
               <div>
-                <div className="font-extrabold text-lg">{ (typeof window !== 'undefined' && (window as any).__CAT_DISPLAY__ && (window as any).__CAT_DISPLAY__[parent]) || displayNameMap[parent] || parent }</div>
+                <div className="font-extrabold text-lg">{ parent }</div>
               </div>
               <div className="flex items-center gap-3">
                 <div className="font-bold">R$ {total.toFixed(2)}</div>
