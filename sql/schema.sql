@@ -199,7 +199,11 @@ INSERT INTO categorias (nome, slug, parent_id) VALUES
   ON CONFLICT DO NOTHING;
 
 INSERT INTO categorias (nome, slug, parent_id) VALUES
-  ('PETLOVE - VETERINARIO','petlove_veterinario', (SELECT id FROM categorias WHERE slug='gatos'))
+  ('PETLOVE','petlove', (SELECT id FROM categorias WHERE slug='gatos'))
+  ON CONFLICT DO NOTHING;
+
+INSERT INTO categorias (nome, slug, parent_id) VALUES
+  ('VETERINARIO','veterinario', (SELECT id FROM categorias WHERE slug='gatos'))
   ON CONFLICT DO NOTHING;
 
 -- Example query: totals per category (top-level)
