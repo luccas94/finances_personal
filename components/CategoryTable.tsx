@@ -26,6 +26,14 @@ const STATIC_CATEGORIES: Record<string, string[]> = {
 export default function CategoryTable({ items }: { items: Item[] }){
   const [open, setOpen] = useState<Record<string, boolean>>({})
   const [subOpen, setSubOpen] = useState<Record<string, Record<string, boolean>>>({})
+
+  function toggleSub(catKey: string, subKey: string){
+    setSubOpen(prev => {
+      const prevCat = prev[catKey] || {}
+      const nextVal = !prevCat[subKey]
+      return { ...prev, [catKey]: { ...prevCat, [subKey]: nextVal } }
+    })
+  }
   const [catMap, setCatMap] = useState<Record<string, string[]>>({})
 
   useEffect(() => {
@@ -125,12 +133,12 @@ export default function CategoryTable({ items }: { items: Item[] }){
                             <div className="text-sm font-medium">{sub}</div>
                             <div className="flex items-center gap-2">
                               <div className="text-sm font-semibold">R$ {subTotals[sub].toFixed(2)}</div>
-                              <button className="btn-ghost" onClick={() => setSubOpen(prev => ({...prev, [cat]: {...(prev[cat]||{}), [sub]: !((prev[cat]||{})[sub])}}))} aria-expanded={!!(subOpen[cat]?.[sub])}>
+                              <button type="button" className="btn-ghost" onClick={(e) => { e.stopPropagation(); toggleSub(cat, sub) }} aria-expanded={Boolean(subOpen[cat]?.[sub])}>
                                 <span className={`chev ${subOpen[cat] && subOpen[cat][sub] ? 'open' : ''}`}>{subOpen[cat] && subOpen[cat][sub] ? '▾' : '▸'}</span>
                               </button>
                             </div>
                           </div>
-                          {subOpen[cat] && subOpen[cat][sub] && (
+                          {Boolean(subOpen[cat]?.[sub]) && (
                             <div className="mt-2 overflow-x-auto">
                               <table className="w-full text-left table-fixed">
                                 <colgroup>

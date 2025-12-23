@@ -129,6 +129,36 @@ INSERT INTO categorias (nome, slug, parent_id) VALUES
   ('PICPAY','picpay', (SELECT id FROM categorias WHERE slug='pix_no_credito'))
   ON CONFLICT DO NOTHING;
 
+-- Add ASSINATURAS parent and streaming/service subcategories
+INSERT INTO categorias (nome, slug, parent_id) VALUES
+  ('ASSINATURAS','assinaturas', NULL)
+  ON CONFLICT DO NOTHING;
+
+INSERT INTO categorias (nome, slug, parent_id) VALUES
+  ('DISNEY+','disney_plus', (SELECT id FROM categorias WHERE slug='assinaturas'))
+  ON CONFLICT DO NOTHING;
+
+INSERT INTO categorias (nome, slug, parent_id) VALUES
+  ('AMAZON PRIME','amazon_prime', (SELECT id FROM categorias WHERE slug='assinaturas'))
+  ON CONFLICT DO NOTHING;
+
+INSERT INTO categorias (nome, slug, parent_id) VALUES
+  ('ICLOUD','icloud', (SELECT id FROM categorias WHERE slug='assinaturas'))
+  ON CONFLICT DO NOTHING;
+
+INSERT INTO categorias (nome, slug, parent_id) VALUES
+  ('NETFLIX','netflix', (SELECT id FROM categorias WHERE slug='assinaturas'))
+  ON CONFLICT DO NOTHING;
+
+INSERT INTO categorias (nome, slug, parent_id) VALUES
+  ('PSN','psn', (SELECT id FROM categorias WHERE slug='assinaturas'))
+  ON CONFLICT DO NOTHING;
+
+-- Add UBER as subcategory under LAZER
+INSERT INTO categorias (nome, slug, parent_id) VALUES
+  ('UBER','uber', (SELECT id FROM categorias WHERE slug='lazer'))
+  ON CONFLICT DO NOTHING;
+
 -- CUIDADOS PESSOAIS
 INSERT INTO categorias (nome, slug, parent_id) VALUES
   ('CUIDADOS PESSOAIS','cuidados_pessoais', NULL)
@@ -169,7 +199,11 @@ INSERT INTO categorias (nome, slug, parent_id) VALUES
   ON CONFLICT DO NOTHING;
 
 INSERT INTO categorias (nome, slug, parent_id) VALUES
-  ('PETLOVE - VETERINARIO','petlove_veterinario', (SELECT id FROM categorias WHERE slug='gatos'))
+  ('PETLOVE','petlove', (SELECT id FROM categorias WHERE slug='gatos'))
+  ON CONFLICT DO NOTHING;
+
+INSERT INTO categorias (nome, slug, parent_id) VALUES
+  ('VETERINARIO','veterinario', (SELECT id FROM categorias WHERE slug='gatos'))
   ON CONFLICT DO NOTHING;
 
 -- Example query: totals per category (top-level)
