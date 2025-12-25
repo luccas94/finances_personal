@@ -91,35 +91,27 @@ export default function DashboardPage() {
 
   return (
     <section>
-      <h2 className="text-xl font-semibold mb-4">Dashboard</h2>
+      <div className="mx-auto max-w-[648px] mb-6">
+        <h2 className="text-xl font-semibold mb-4" style={{textAlign:'center'}}>Dashboard</h2>
 
-      <div className="flex items-center gap-3 mb-4">
-        <label className="text-sm muted">Mês</label>
-        <input type="month" value={selectedMonth} onChange={e=>setSelectedMonth(e.target.value)} className="input" />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="card">
-          <p className="text-sm muted">Gasto no mês</p>
-          <p className="text-2xl font-bold mt-2">R$ {total.toFixed(2)}</p>
-        </div>
-        <div className="card">
-          <p className="text-sm muted">Mês anterior</p>
-          <p className="text-2xl font-bold mt-2">R$ {prevTotal.toFixed(2)}</p>
-        </div>
-        <div className="card">
-          <p className="text-sm muted">Variação</p>
-          <p className="text-2xl font-bold mt-2">{diff >=0 ? '▲' : '▼'} R$ {Math.abs(diff).toFixed(2)} <span className="text-sm muted">({diffPct.toFixed(0)}%)</span></p>
+        <div className="cards-strip">
+          <div className="card" style={{flex: '0 0 200px', maxWidth: '200px'}}>
+            <p className="text-sm muted">Gasto no mês</p>
+            <p className="text-2xl font-bold mt-2">R$ {total.toFixed(2)}</p>
+          </div>
+          <div className="card" style={{flex: '0 0 200px', maxWidth: '200px'}}>
+            <p className="text-sm muted">Mês anterior</p>
+            <p className="text-2xl font-bold mt-2">R$ {prevTotal.toFixed(2)}</p>
+          </div>
+          <div className="card" style={{flex: '0 0 200px', maxWidth: '200px'}}>
+            <p className="text-sm muted">Variação</p>
+            <p className="text-2xl font-bold mt-2">{diff >=0 ? '▲' : '▼'} R$ {Math.abs(diff).toFixed(2)} <span className="text-sm muted">({diffPct.toFixed(0)}%)</span></p>
+          </div>
         </div>
       </div>
 
-      <div className="flex items-center justify-between mb-6">
-        <div />
-        <Link href="/dashboard/comparativo" className="btn-primary">VER COMPARATIVO MENSAL</Link>
-      </div>
-
-      <div>
-        <h3 className="text-lg font-semibold mb-3">Categorias</h3>
+      <div className="mx-auto max-w-[648px]">
+        <h3 className="text-lg font-semibold mb-3" style={{textAlign:'center'}}>Categorias</h3>
         <CategoryTable items={items} />
       </div>
     </section>
