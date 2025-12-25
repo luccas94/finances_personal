@@ -13,7 +13,6 @@ type Item = {
 
 import supabase from '../lib/supabaseClient'
 
-// fallback static mapping (kept for compatibility) — dynamic data from DB will override when available
 const STATIC_CATEGORIES: Record<string, string[]> = {
   'ALIMENTAÇÃO': ['IFOOD','MERCADO','RESTAURANTES','BARES'],
   'LAZER': ['TABACO/SEDA','DISTRIBUIDORA'],
@@ -26,14 +25,6 @@ const STATIC_CATEGORIES: Record<string, string[]> = {
 export default function CategoryTable({ items }: { items: Item[] }){
   const [open, setOpen] = useState<Record<string, boolean>>({})
   const [subOpen, setSubOpen] = useState<Record<string, Record<string, boolean>>>({})
-
-  function toggleSub(catKey: string, subKey: string){
-    setSubOpen(prev => {
-      const prevCat = prev[catKey] || {}
-      const nextVal = !prevCat[subKey]
-      return { ...prev, [catKey]: { ...prevCat, [subKey]: nextVal } }
-    })
-  }
   const [catMap, setCatMap] = useState<Record<string, string[]>>({})
 
   useEffect(() => {
@@ -46,31 +37,22 @@ export default function CategoryTable({ items }: { items: Item[] }){
         const map: Record<string,string[]> = {}
         const reverse: Record<string,string> = {}
         parents.forEach(p => {
-          const subs = rows.filter(s => s.parent_id === p.id).map(s => {
-            const upper = s.nome.toUpperCase()
-            reverse[upper] = p.nome.toUpperCase()
-            return upper
-          })
+          const subs = rows.filter(s => s.parent_id === p.id).map(s => s.nome.toUpperCase())
+          subs.forEach(s => reverse[s] = p.nome.toUpperCase())
           map[p.nome.toUpperCase()] = subs
         })
         setCatMap(map)
-        // attach reverse map to window for use in grouping logic (small hack without changing state types)
         ;(window as any).__CAT_REVERSE__ = reverse
-      }catch(err){
-        // silent fail — keep static mapping
-        console.error('failed to load categories', err)
-      }
+      }catch(e){ console.error(e) }
     }
     loadCats()
   }, [])
 
-  // compute totals
+  // prepare grouped data
   const totalsByCategory: Record<string, number> = {}
   const detailsByCategory: Record<string, Item[]> = {}
-
   items.forEach(it => {
     let cat = (it.categoria || 'Sem categoria').toUpperCase()
-    // if the stored `categoria` is actually a subcategory, map it to its parent when possible
     const reverse = (window as any).__CAT_REVERSE__ as Record<string,string> | undefined
     if (reverse && !Object.keys(STATIC_CATEGORIES).map(k=>k.toUpperCase()).includes(cat)){
       const mapped = reverse[cat]
@@ -81,105 +63,85 @@ export default function CategoryTable({ items }: { items: Item[] }){
     detailsByCategory[cat].push(it)
   })
 
-  const knownParents = new Set([...Object.keys(STATIC_CATEGORIES), ...Object.keys(catMap)])
-  const categories = Array.from(new Set([...Array.from(knownParents), ...Object.keys(totalsByCategory)]))
+  const parents = Array.from(new Set([...Object.keys(STATIC_CATEGORIES).map(k=>k.toUpperCase()), ...Object.keys(catMap), ...Object.keys(totalsByCategory)]))
 
   return (
-    <div className="space-y-3">
-      {categories.map(cat => {
-        const total = totalsByCategory[cat] ?? 0
-        const subcats = catMap[cat] ?? STATIC_CATEGORIES[cat] ?? []
+    <div className="space-y-5">
+      {parents.map(parent => {
+        const total = totalsByCategory[parent] ?? 0
+        const rows = detailsByCategory[parent] || []
+
+        // group rows by subcategoria
+        const subTotals: Record<string, number> = {}
+        const subRows: Record<string, Item[]> = {}
+        rows.forEach(r => {
+          const subKey = (r.subcategoria || r.categoria || 'Sem subcategoria').toString()
+          subTotals[subKey] = (subTotals[subKey] || 0) + Number(r.valor || 0)
+          subRows[subKey] = subRows[subKey] || []
+          subRows[subKey].push(r)
+        })
+
         return (
-          <div key={cat} className="card">
-              <div className="collapse-header">
+          <div key={parent} className="card category-card">
+            <div className="collapse-header cursor-pointer" onClick={() => setOpen(prev => ({...prev, [parent]: !prev[parent]}))}>
               <div>
-                <div className="font-semibold">{cat}</div>
+                <div className="font-extrabold text-lg">{parent}</div>
               </div>
               <div className="flex items-center gap-3">
                 <div className="font-bold">R$ {total.toFixed(2)}</div>
-                  <button className="btn-ghost" onClick={() => setOpen(prev => ({...prev, [cat]: !prev[cat]}))} aria-expanded={!!open[cat]}>
-                    <span className={`chev ${open[cat] ? 'open' : ''}`}>▾</span>
-                  </button>
+                <button className="btn-ghost" onClick={(e) => { e.stopPropagation(); setOpen(prev => ({...prev, [parent]: !prev[parent]})) }} aria-expanded={!!open[parent]}>
+                  <span className={`chev ${open[parent] ? 'open' : ''}`}>▾</span>
+                </button>
               </div>
             </div>
-            {open[cat] && (
+
+            {open[parent] && (
               <div className="mt-3 border-t pt-3">
-                {/* Group by subcategory */}
-                {(() => {
-                  const rows = detailsByCategory[cat] || []
-                  const subTotals: Record<string, number> = {}
-                  const subDetails: Record<string, Item[]> = {}
-                  rows.forEach(r => {
-                    // prefer explicit subcategoria; otherwise if categoria value is actually a subcategory, use it
-                    let sub: string | null = r.subcategoria ? r.subcategoria.toString() : null
-                    if (!sub){
-                      const catVal = (r.categoria || '').toString().toUpperCase()
-                      const reverse = (window as any).__CAT_REVERSE__ as Record<string,string> | undefined
-                      if (reverse && reverse[catVal]){
-                        sub = r.categoria?.toString() || 'Sem subcategoria'
-                      }
-                    }
-                    if (!sub) sub = 'Sem subcategoria'
-                    subTotals[sub] = (subTotals[sub] || 0) + Number(r.valor || 0)
-                    subDetails[sub] = subDetails[sub] || []
-                    subDetails[sub].push(r)
-                  })
-                  const subs = Object.keys(subTotals)
-                  return (
-                    <div className="space-y-2">
-                      {subs.map(sub => (
-                        <div key={sub} className="border-b pb-2">
-                          <div className="flex items-center justify-between">
-                            <div className="text-sm font-medium">{sub}</div>
-                            <div className="flex items-center gap-2">
-                              <div className="text-sm font-semibold">R$ {subTotals[sub].toFixed(2)}</div>
-                              <button type="button" className="btn-ghost" onClick={(e) => { e.stopPropagation(); toggleSub(cat, sub) }} aria-expanded={Boolean(subOpen[cat]?.[sub])}>
-                                <span className={`chev ${subOpen[cat] && subOpen[cat][sub] ? 'open' : ''}`}>{subOpen[cat] && subOpen[cat][sub] ? '▾' : '▸'}</span>
-                              </button>
-                            </div>
-                          </div>
-                          {Boolean(subOpen[cat]?.[sub]) && (
-                            <div className="mt-2 overflow-x-auto">
-                              <table className="w-full text-left table-fixed">
-                                <colgroup>
-                                  <col style={{width: '90px'}} />
-                                  <col />
-                                  <col style={{width: '96px'}} />
-                                </colgroup>
-                                <thead>
-                                  <tr className="text-sm muted">
-                                    <th className="px-2">Data</th>
-                                    <th className="px-2">Descrição</th>
-                                    <th className="px-2 text-right">Valor</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {subDetails[sub].map(row => {
-                                    // parse as local date and format as DD/MM
-                                    let dStr = '-'
-                                    if (row.data){
-                                      try{
-                                        const [yy, mm, dd] = row.data.toString().split('-').map(x=>Number(x))
-                                        if (!isNaN(yy) && !isNaN(mm) && !isNaN(dd)) dStr = `${String(dd).padStart(2,'0')}/${String(mm).padStart(2,'0')}`
-                                      }catch(_){}
-                                    }
-                                    return (
-                                      <tr key={row.id} className="align-top border-b last:border-b-0">
-                                        <td className="py-1 px-2 text-sm muted whitespace-nowrap">{dStr}</td>
-                                        <td className="py-1 px-2 text-sm muted truncate overflow-hidden whitespace-nowrap">{row.descricao ?? ''}</td>
-                                        <td className="py-1 px-2 text-sm text-right whitespace-nowrap">R$ {Number(row.valor || 0).toFixed(2)}</td>
-                                      </tr>
-                                    )
-                                  })}
-                                </tbody>
-                              </table>
-                            </div>
-                          )}
+                <div className="space-y-3">
+                  {Object.keys(subRows).map(sub => (
+                    <div key={sub} className="subgroup">
+                      <div className="subheader">
+                        <div>
+                          <div className="text-sm sub-title">{sub}</div>
                         </div>
-                      ))}
+                        <div className="flex items-center gap-2">
+                          <div className="text-sm font-semibold">R$ { (subTotals[sub]||0).toFixed(2) }</div>
+                          <button type="button" className="btn-ghost" onClick={(e)=>{ e.stopPropagation(); setSubOpen(prev=>({ ...(prev), [parent]: { ...(prev[parent]||{}), [sub]: !prev[parent]?.[sub] } })) }}>
+                            <span className={`chev ${subOpen[parent]?.[sub] ? 'open' : ''}`}>{ subOpen[parent]?.[sub] ? '▾' : '▸' }</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {subOpen[parent]?.[sub] && (
+                        <div className="subdetails mt-2">
+                          <div className="card p-3 overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="text-left text-xs muted">
+                                  <th className="px-3 py-2 w-20">Data</th>
+                                  <th className="px-3 py-2">Descrição</th>
+                                  <th className="px-3 py-2 text-right w-28">Valor</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {subRows[sub].map(row => {
+                                  const date = row.data ? (()=>{ const [y,m,d]=row.data.split('-'); return `${d.padStart(2,'0')}/${m.padStart(2,'0')}` })() : '-'
+                                  return (
+                                    <tr key={row.id} className="border-t last:border-b">
+                                      <td className="px-3 py-2 whitespace-nowrap">{date}</td>
+                                      <td className="px-3 py-2">{row.descricao ?? ''}</td>
+                                      <td className="px-3 py-2 text-right font-semibold">R$ {Number(row.valor||0).toFixed(2)}</td>
+                                    </tr>
+                                  )
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )
-                })()}
+                  ))}
+                </div>
               </div>
             )}
           </div>

@@ -63,10 +63,9 @@ export default function ComparativoPage(){
         if (!(key in totals)) return
           const valor = Number(row.valor || 0)
           totals[key] += valor
-          // map to parent category
+          // map to parent category — use only the `categoria` field (ignore subcategoria)
           const catU = (row.categoria||'').toString().toUpperCase()
-          const subU = (row.subcategoria||'').toString().toUpperCase()
-          let parent = Object.keys(PARENT_CATS).find(p => PARENT_CATS[p].includes(subU) || PARENT_CATS[p].includes(catU))
+          let parent = Object.keys(PARENT_CATS).find(p => PARENT_CATS[p].includes(catU))
           if (!parent) parent = 'Outros'
           stacks[key][parent] = (stacks[key][parent]||0) + valor
         })

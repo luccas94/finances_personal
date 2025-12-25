@@ -7,7 +7,8 @@
   --bg: #f2f2f7;
   --card: #ffffff;
   --muted: #6b7280;
-  --accent: #0ea5a4;
+  --accent: #10b981;
+  --rhythm: 0.72rem;
   --text: #0f172a;
 }
 
@@ -25,6 +26,10 @@ body{
 
 .container { max-width: 414px; margin: 0 auto; padding: 1rem; box-sizing: border-box; font-size:16px; }
 
+/* Global vertical rhythm for consistent spacing between primary blocks */
+.container > * + * { margin-top: var(--rhythm); }
+.card > * + * { margin-top: calc(var(--rhythm) / 1.1); }
+
 /* Respect iPhone safe areas */
 .safe-area { padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
 
@@ -34,18 +39,25 @@ body{
   top: 0;
   z-index: 40;
   padding: env(safe-area-inset-top) 0 0;
-  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.85));
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border-bottom: 1px solid rgba(15,23,42,0.06);
+  background: transparent;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
-.topbar .inner { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:0.5rem 0.75rem; }
-.topbar .title { font-weight:700; font-size:1rem; letter-spacing:-0.2px; }
-.topbar .back { width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center; border-radius:10px; background:transparent; color:var(--accent); border:1px solid rgba(14,165,164,0.12) }
+/* Prominent green header block */
+.topbar .inner { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:1rem 1rem; background:var(--accent); border-radius:18px; margin:0.5rem auto; max-width:980px; width:calc(100% - 2rem); color:#fff }
+.topbar .title { font-weight:800; font-size:1.05rem; letter-spacing:-0.2px; }
+.topbar .back { width:40px; height:40px; display:inline-flex; align-items:center; justify-content:center; border-radius:10px; background:rgba(255,255,255,0.08); color:var(--card); border:1px solid rgba(255,255,255,0.06) }
+.topbar .avatar { width:44px; height:44px; border-radius:12px; background: rgba(255,255,255,0.12); display:inline-flex; align-items:center; justify-content:center; font-weight:700 }
+.topbar .title small { font-weight:600; opacity:0.9; margin-left:6px; font-size:0.9rem; color: rgba(255,255,255,0.92) }
 
 /* Card */
-.card { background: var(--card); border-radius: 14px; box-shadow: 0 8px 26px rgba(12,12,12,0.08); padding: 1rem; width:100%; overflow:hidden; }
+.card { background: var(--card); border-radius: 16px; box-shadow: 0 10px 30px rgba(12,12,12,0.08); padding: 1rem; width:100%; overflow:hidden; border: 1px solid rgba(15,23,42,0.04); }
+.card.feature { padding:1rem 1.25rem; border-radius:18px } 
+.card .card-title{ font-weight:700; font-size:1rem }
+.card .card-sub{ color:var(--muted); font-size:0.9rem; margin-top:0.4rem }
+.balance { font-size:1.6rem; font-weight:800; color:var(--text) }
+
 
 /* Input helper */
 .input { background: #fbfbfd; border-radius: 12px; padding: 0.7rem 0.9rem; border: 1px solid rgba(15,23,42,0.06); width:100%; font-size:0.95rem; }
@@ -78,12 +90,73 @@ input, textarea, select { background: #fbfbfd; border-radius: 12px; padding: 0.7
 
 /* Bottom navigation (home indicator aware) */
 .bottom-nav { position: fixed; left: 50%; transform: translateX(-50%); bottom: env(safe-area-inset-bottom, 12px); width: calc(100% - 32px); max-width:414px; display:flex; justify-content:center; align-items:center; gap:0.5rem; z-index:50; }
-.bottom-nav .bar { display:flex; gap:0.5rem; background: rgba(255,255,255,0.96); padding:0.35rem; border-radius: 999px; box-shadow: 0 12px 30px rgba(12,12,12,0.12); backdrop-filter: blur(6px); }
-.bottom-nav a { display:flex; align-items:center; gap:0.5rem; padding:0.5rem 0.9rem; border-radius: 999px; color:var(--muted); font-weight:700; font-size:0.92rem }
-.bottom-nav a.active { color: white; background: linear-gradient(180deg,var(--accent), #059d97); box-shadow: 0 8px 18px rgba(14,165,164,0.18) }
+.bottom-nav .bar { display:flex; gap:0.5rem; background: rgba(255,255,255,0.98); padding:0.28rem; border-radius: 999px; box-shadow: 0 14px 34px rgba(12,12,12,0.14); backdrop-filter: blur(6px); }
+.bottom-nav a { display:flex; align-items:center; gap:0.5rem; padding:0.4rem 0.9rem; border-radius: 999px; color:var(--muted); font-weight:700; font-size:0.92rem }
+.bottom-nav a.active { color: white; background: linear-gradient(180deg,var(--accent), #059d97); box-shadow: 0 12px 22px rgba(16,185,129,0.18) }
+/* central add button */
+.bottom-nav .center { position:relative }
+.bottom-nav .center .plus { width:64px; height:64px; border-radius:999px; background:var(--accent); display:inline-flex; align-items:center; justify-content:center; color:white; font-size:24px; box-shadow: 0 12px 30px rgba(16,185,129,0.18); transform: translateY(-18px); }
+
 
 /* Helpful helpers */
 .stack { display:flex; gap:0.75rem; }
+
+/* CategoryTable subgroup styles */
+.category-card { padding: 0.9rem; }
+.category-card { padding: 1rem; margin-bottom: 0.6rem; }
+.subgroup { padding: 0.6rem 0; border-radius: 10px; }
+.subheader { display:flex; align-items:center; justify-content:space-between; padding: 0.35rem 0; gap:12px; }
+.sub-title { font-weight:700; font-size:0.97rem; color:var(--text); }
+.subdetails { background: rgba(15,23,42,0.03); border-radius:10px; padding:0.6rem; margin-top:0.5rem; }
+.table-row { border-bottom: 1px solid rgba(15,23,42,0.04); }
+.table-row:last-child { border-bottom: none; }
+.description { color: var(--text); white-space: normal; }
+
+/* Accent bar on the left of each category card (like the mock) */
+.category-card { position: relative; box-sizing: border-box; }
+.category-card::before { content: ''; position: absolute; left: 12px; top: 14px; bottom: 14px; width: 4px; border-radius: 4px; background: linear-gradient(180deg,var(--accent), #059d97); opacity:0.98 }
+
+/* Mobile-friendly subdetails: make rows flex so long descriptions don't overflow */
+.subdetails table { border-collapse: separate; border-spacing: 0 8px; width:100% }
+.subdetails thead tr { display:none }
+.subdetails tbody tr { display:flex; gap:10px; align-items:center; background: white; border-radius:8px; box-shadow: 0 6px 18px rgba(12,12,12,0.03); padding: 0.45rem 0.5rem; }
+.subdetails td { padding: 0; vertical-align: middle; display:block; }
+.subdetails td:nth-child(1) { flex: 0 0 62px; width:62px; color:var(--muted); font-size:0.92rem; white-space:nowrap }
+.subdetails td:nth-child(2) { flex: 1 1 140px; min-width:0; max-width:220px; padding-left:6px; font-size:0.95rem; overflow-wrap:anywhere }
+.subdetails td:nth-child(3) { flex: 0 0 76px; width:76px; text-align:center; font-weight:700; display:flex; align-items:center; justify-content:center }
+.subdetails td.description { color: #111827; overflow-wrap: anywhere }
+
+/* Constrain and center the detail card inside each subcategory */
+.subdetails .card { width: 100%; max-width: 648px; margin: 0.35rem auto; padding: 0.6rem; box-shadow: 0 8px 22px rgba(12,12,12,0.04); }
+.subdetails .card table { width: 100%; }
+
+/* Smaller chevrons and tighter ghost buttons to save horizontal space */
+.chev { width:26px; height:26px }
+.btn-ghost { padding: 0.25rem 0.45rem }
+
+
+/* Tighter control for ghost buttons and chevrons */
+.btn-ghost { background: transparent; color: var(--muted); padding: 0.35rem 0.6rem; border-radius: 8px; border: 1px solid rgba(15,23,42,0.03); font-weight:600 }
+.btn-ghost:hover { background: rgba(14,165,164,0.03); color: var(--accent) }
+.chev { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:8px; transition: transform .18s ease, background .12s ease; }
+.chev.open { transform: rotate(180deg); background: rgba(14,165,164,0.06); }
+
+/* Parent header spacing */
+.collapse-header { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:0.35rem 0; }
+.collapse-header .font-semibold{ font-size:1rem }
+
+/* Sublevel visual: indent childs and style the small paragraph description */
+.subgroup { padding: 0.6rem 0; border-radius: 10px; padding-left: 1.4rem }
+.sub-desc { margin-top: 0.18rem; color: var(--muted); max-width: 78%; font-size:0.88rem }
+
+/* Table cosmetics inside subdetails */
+.subdetails table { border-collapse: separate; border-spacing: 0 8px; width:100% }
+.subdetails thead tr { display:none }
+.subdetails tbody tr { background: white; border-radius:8px; box-shadow: 0 6px 18px rgba(12,12,12,0.03); }
+.subdetails td { padding: 0.7rem 0.6rem; vertical-align: middle }
+.subdetails td.description { color: #111827 }
+
+
 
 /* Mobile compact styles (iPhone 11, ~414px) */
 @media (max-width:420px){
@@ -107,4 +180,23 @@ input, textarea, select { background: #fbfbfd; border-radius: 12px; padding: 0.7
   .main-content { padding-bottom: calc(env(safe-area-inset-bottom) + 84px); }
 }
 
+/* Extra mobile shrink rules to avoid horizontal overflow */
+@media (max-width:420px){
+  .category-card::before{ left:10px; top:12px; bottom:12px }
+  .category-card{ padding:0.6rem 0.6rem 0.6rem 1.1rem }
+  .subdetails tbody tr{ padding:0.4rem }
+  .collapse-header{ padding:0.2rem 0 }
+  .collapse-header .font-semibold{ font-size:0.98rem }
+}
+
 @media (min-width:768px){ .container{ padding:1.25rem; max-width:980px; } }
+
+/* Cards strip: force cards side-by-side with fixed card width and horizontal scroll when needed */
+.cards-strip { display:flex; gap:1rem; overflow-x:auto; -webkit-overflow-scrolling:touch; padding:0 0.5rem; justify-content:center }
+.cards-strip .card { width: auto; flex: 0 0 200px; max-width:200px; }
+.cards-strip::-webkit-scrollbar { height:8px }
+.cards-strip::-webkit-scrollbar-thumb { background: rgba(15,23,42,0.06); border-radius:8px }
+
+/* Ensure card content stacks vertically in the cards strip */
+.cards-strip .card { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0.9rem; text-align:center }
+.cards-strip .card .text-2xl { margin-top:0.5rem }
