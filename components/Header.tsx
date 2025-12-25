@@ -54,10 +54,12 @@ export default function Header(){
     try {
       const meta:any = (user as any)?.user_metadata || {}
       const nm = (fullName || meta.full_name || user?.email?.split('@')[0] || '').toString().toLowerCase()
-      let color = '#10b981' // default green
-      if (nm.includes('milen')) color = '#ec4899' // pink for Mileny
-      if (nm.includes('lucas')) color = '#10b981' // green for Lucas
-      document?.documentElement?.style?.setProperty('--accent', color)
+      let colorMain = '#10b981' // default green
+      let colorSec = '#059d97'
+      if (nm.includes('milen')) { colorMain = '#ec4899'; colorSec = '#db2777' } // pink shades
+      if (nm.includes('lucas')) { colorMain = '#10b981'; colorSec = '#059d97' } // green shades
+      document?.documentElement?.style?.setProperty('--accent', colorMain)
+      document?.documentElement?.style?.setProperty('--accent-2', colorSec)
     } catch (_){ }
   }, [user, fullName])
 
