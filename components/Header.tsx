@@ -49,6 +49,18 @@ export default function Header(){
     }
   }, [])
 
+  // adjust theme color based on logged user name
+  useEffect(() => {
+    try {
+      const meta:any = (user as any)?.user_metadata || {}
+      const nm = (fullName || meta.full_name || user?.email?.split('@')[0] || '').toString().toLowerCase()
+      let color = '#10b981' // default green
+      if (nm.includes('milen')) color = '#ec4899' // pink for Mileny
+      if (nm.includes('lucas')) color = '#10b981' // green for Lucas
+      document?.documentElement?.style?.setProperty('--accent', color)
+    } catch (_){ }
+  }, [user, fullName])
+
   if (pathname === '/login' || !user) return null
 
   const meta:any = (user as any)?.user_metadata || {}
