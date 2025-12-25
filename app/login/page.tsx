@@ -1,5 +1,5 @@
  'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 
@@ -11,8 +11,22 @@ export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [remember, setRemember] = useState(false)
   const [msg, setMsg] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // load saved credentials if present
+  useEffect(() => {
+    try{
+      const saved = localStorage.getItem('remember-credentials')
+      if (saved){
+        const obj = JSON.parse(saved)
+        if (obj?.email) setEmail(obj.email)
+        if (obj?.password) setPassword(obj.password)
+        if (obj?.remember) setRemember(true)
+      }
+    }catch(_){}
+  }, [])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -24,6 +38,14 @@ export default function LoginPage() {
       setMsg(res.error.message || JSON.stringify(res.error))
       setLoading(false)
     } else {
+      // save credentials if requested (note: localStorage is not secure; avoid using with sensitive accounts)
+      try{
+        if (remember){
+          localStorage.setItem('remember-credentials', JSON.stringify({ email, password, remember: true }))
+        } else {
+          localStorage.removeItem('remember-credentials')
+        }
+      }catch(_){}
       setMsg('Login realizado. Redirecionando...')
       // small delay to show message then redirect
       setTimeout(() => {
@@ -50,6 +72,14 @@ export default function LoginPage() {
 
             <label className="text-xs text-gray-600">Senha</label>
             <input className="border p-3 rounded-md shadow-sm" placeholder="Senha" type="password" value={password} onChange={e => setPassword(e.target.value)} />
+
+            <div className="flex items-center gap-3">
+              <label className="inline-flex items-center text-sm">
+                <input type="checkbox" className="mr-2" checked={remember} onChange={e => setRemember(e.target.checked)} />
+                Lembrar e-mail e senha
+              </label>
+              <button type="button" className="text-sm text-gray-500 underline" onClick={() => { localStorage.removeItem('remember-credentials'); setEmail(''); setPassword(''); setRemember(false) }}>Esquecer</button>
+            </div>
 
             <button className="bg-teal-600 text-white p-3 rounded-md font-medium">Entrar</button>
           </form>
