@@ -101,15 +101,20 @@ export default function CategoryTable({ items, refreshItems }: { items: Item[], 
   const _seen = new Set<string>()
   parents.forEach(p => { if (!_seen.has(p)) { _seen.add(p); uniqueParents.push(p) } })
 
-  // debug: log parents and duplicates (avoid running on server if window is undefined)
-  if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+  // client-side diagnostic logging to investigate duplication in production
+  if (typeof window !== 'undefined') {
     try {
       const counts: Record<string, number> = {}
       uniqueParents.forEach(p => counts[p] = (counts[p] || 0) + 1)
       const dupes = Object.entries(counts).filter(([,c])=>c>1)
-      if (dupes.length) console.warn('Duplicate parents found', dupes)
-      console.debug('CategoryTable parents', uniqueParents.length, uniqueParents)
-    } catch (_) {}
+      if (dupes.length) console.warn('CategoryTable duplicate parents', dupes)
+      // print a compact report: parent display name + count + first 5 ids under it
+      const byCounts: Record<string, {count:number, ids:string[]}> = {}
+      Object.keys(detailsByCategory || {}).forEach(k => {
+        byCounts[k] = { count: (detailsByCategory[k]||[]).length, ids: (detailsByCategory[k]||[]).slice(0,5).map(r=>r.id) }
+      })
+      console.info('CategoryTable report', { parents: uniqueParents, totals: Object.keys(totalsByCategory).length, details: byCounts })
+    } catch (e){ console.error('CategoryTable diagnostic error', e) }
   }
 
   const [editingRow, setEditingRow] = useState<Item | null>(null)
@@ -153,7 +158,7 @@ export default function CategoryTable({ items, refreshItems }: { items: Item[], 
               <div className="flex items-center gap-3">
                 <div className="font-bold">R$ {total.toFixed(2)}</div>
                 <button className="btn-ghost" onClick={(e) => { e.stopPropagation(); setOpen(prev => ({...prev, [parent]: !prev[parent]})) }} aria-expanded={!!open[parent]}>
-                  <span className={`chev ${open[parent] ? 'open' : ''}`}>▾</span>
+                  <span className={`chev ${open[parent] ? 'open' : ''}`}>{ open[parent] ? '▾' : '▸' }</span>
                 </button>
               </div>
             </div>
