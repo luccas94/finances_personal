@@ -12,6 +12,7 @@ type Item = {
 }
 
 import supabase from '../lib/supabaseClient'
+import EditLaunchModal from './EditLaunchModal'
 
 const STATIC_CATEGORIES: Record<string, string[]> = {
   'ALIMENTAÇÃO': ['IFOOD','MERCADO','RESTAURANTES','BARES'],
@@ -22,7 +23,7 @@ const STATIC_CATEGORIES: Record<string, string[]> = {
   'DIVERSOS': ['SHOPEE','MERCADO LIVRE','COMPRAS GERAIS']
 }
 
-export default function CategoryTable({ items }: { items: Item[] }){
+export default function CategoryTable({ items, refreshItems }: { items: Item[], refreshItems?: (month?: string) => void }){
   const [open, setOpen] = useState<Record<string, boolean>>({})
   const [subOpen, setSubOpen] = useState<Record<string, Record<string, boolean>>>({})
   const [catMap, setCatMap] = useState<Record<string, string[]>>({})
@@ -64,6 +65,7 @@ export default function CategoryTable({ items }: { items: Item[] }){
   })
 
   const parents = Array.from(new Set([...Object.keys(STATIC_CATEGORIES).map(k=>k.toUpperCase()), ...Object.keys(catMap), ...Object.keys(totalsByCategory)]))
+  const [editingRow, setEditingRow] = useState<Item | null>(null)
 
   return (
     <div className="space-y-5">
@@ -129,7 +131,12 @@ export default function CategoryTable({ items }: { items: Item[] }){
                                   return (
                                     <tr key={row.id} className="border-t last:border-b">
                                       <td className="px-3 py-2 whitespace-nowrap">{date}</td>
-                                      <td className="px-3 py-2">{row.descricao ?? ''}</td>
+                                      <td className="px-3 py-2" style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
+                                        <div style={{flex:1}}>{row.descricao ?? ''}</div>
+                                        <div style={{flex:'0 0 auto'}}>
+                                          <button className="btn-ghost" onClick={(e)=>{ e.stopPropagation(); setEditingRow(row) }} aria-label="Editar lançamento">✏️</button>
+                                        </div>
+                                      </td>
                                       <td className="px-3 py-2 text-right font-semibold">R$ {Number(row.valor||0).toFixed(2)}</td>
                                     </tr>
                                   )
@@ -147,6 +154,10 @@ export default function CategoryTable({ items }: { items: Item[] }){
           </div>
         )
       })}
+
+      {editingRow && (
+        <EditLaunchModal launch={editingRow} onClose={() => setEditingRow(null)} onSaved={() => { setEditingRow(null); refreshItems?.() }} />
+      )}
     </div>
   )
 }
