@@ -54,8 +54,11 @@ export default function DashboardPage() {
           data: r.data,
           estabelecimento: r.estabelecimento
         }))
-        setItems(parsed)
-        setTotal(parsed.reduce((s:any, it:any) => s + Number(it.valor || 0), 0))
+        // dedupe by id in case the query returns duplicates
+        const uniqueMap = new Map(parsed.map(p => [p.id, p]))
+        const unique = Array.from(uniqueMap.values())
+        setItems(unique)
+        setTotal(unique.reduce((s:any, it:any) => s + Number(it.valor || 0), 0))
       }
 
       // previous month
