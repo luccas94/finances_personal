@@ -23,6 +23,11 @@ const STATIC_CATEGORIES: Record<string, string[]> = {
   'DIVERSOS': ['SHOPEE','MERCADO LIVRE','COMPRAS GERAIS']
 }
 
+function normalizeKey(s?: string){
+  if (!s) return 'SEM_CATEGORIA'
+  return s.toString().normalize('NFKD').replace(/\p{Diacritic}/gu, '').trim().toUpperCase()
+}
+
 export default function CategoryTable({ items, refreshItems }: { items: Item[], refreshItems?: (month?: string) => void }){
   const [open, setOpen] = useState<Record<string, boolean>>({})
   const [subOpen, setSubOpen] = useState<Record<string, Record<string, boolean>>>({})
@@ -37,34 +42,58 @@ export default function CategoryTable({ items, refreshItems }: { items: Item[], 
         const parents = rows.filter(r=>r.parent_id===null)
         const map: Record<string,string[]> = {}
         const reverse: Record<string,string> = {}
+        const displayMap: Record<string,string> = {}
+
         parents.forEach(p => {
-          const subs = rows.filter(s => s.parent_id === p.id).map(s => s.nome.toUpperCase())
-          subs.forEach(s => reverse[s] = p.nome.toUpperCase())
-          map[p.nome.toUpperCase()] = subs
+          const pKey = normalizeKey(p.nome)
+          const subs = rows.filter(s => s.parent_id === p.id).map(s => s.nome)
+          // store subs as original strings
+          map[pKey] = subs
+          subs.forEach(s => { reverse[normalizeKey(s)] = pKey })
+          // remember display name
+          displayMap[pKey] = p.nome.toUpperCase()
         })
+
         setCatMap(map)
         ;(window as any).__CAT_REVERSE__ = reverse
+        ;(window as any).__CAT_DISPLAY__ = displayMap
       }catch(e){ console.error(e) }
     }
     loadCats()
   }, [])
 
-  // prepare grouped data
+  // prepare grouped data (normalize keys to avoid duplicates caused by accents/case variations)
   const totalsByCategory: Record<string, number> = {}
   const detailsByCategory: Record<string, Item[]> = {}
+  const displayNameMap: Record<string,string> = {}
+
   items.forEach(it => {
-    let cat = (it.categoria || 'Sem categoria').toUpperCase()
+    const rawCat = it.categoria || 'Sem categoria'
+    let key = normalizeKey(rawCat)
+    // if there is a reverse mapping from subcategory to parent key (set during loadCats), use it
     const reverse = (window as any).__CAT_REVERSE__ as Record<string,string> | undefined
-    if (reverse && !Object.keys(STATIC_CATEGORIES).map(k=>k.toUpperCase()).includes(cat)){
-      const mapped = reverse[cat]
-      if (mapped) cat = mapped
+    if (reverse){
+      const maybe = reverse[normalizeKey(key)]
+      if (maybe) key = maybe
     }
-    totalsByCategory[cat] = (totalsByCategory[cat] || 0) + Number(it.valor || 0)
-    detailsByCategory[cat] = detailsByCategory[cat] || []
-    detailsByCategory[cat].push(it)
+
+    totalsByCategory[key] = (totalsByCategory[key] || 0) + Number(it.valor || 0)
+    detailsByCategory[key] = detailsByCategory[key] || []
+    detailsByCategory[key].push(it)
+    if (!displayNameMap[key]) displayNameMap[key] = (rawCat || '').toString().toUpperCase()
   })
 
-  const parents = Array.from(new Set([...Object.keys(STATIC_CATEGORIES).map(k=>k.toUpperCase()), ...Object.keys(catMap), ...Object.keys(totalsByCategory)]))
+  // build ordered list of parent keys (normalized) preserving desired order: STATIC_CATEGORIES, catMap, totals
+  const orderedKeys: string[] = []
+  const pushIf = (k: string) => { if (!orderedKeys.includes(k)) orderedKeys.push(k) }
+  // static categories (normalize)
+  Object.keys(STATIC_CATEGORIES).forEach(k => pushIf(normalizeKey(k)))
+  // categories from DB (catMap keys are normalized already)
+  Object.keys(catMap).forEach(k => pushIf(k))
+  // categories coming from data
+  Object.keys(totalsByCategory).forEach(k => pushIf(k))
+
+  const parents = Array.from(new Set(orderedKeys))
 
   // debug: log parents and duplicates
   if (process.env.NODE_ENV !== 'production') {
@@ -113,7 +142,7 @@ export default function CategoryTable({ items, refreshItems }: { items: Item[], 
           <div key={parent} className="card category-card">
             <div className="collapse-header cursor-pointer" onClick={() => setOpen(prev => ({...prev, [parent]: !prev[parent]}))}>
               <div>
-                <div className="font-extrabold text-lg">{parent}</div>
+                <div className="font-extrabold text-lg">{ ((window as any).__CAT_DISPLAY__ && (window as any).__CAT_DISPLAY__[parent]) || displayNameMap[parent] || parent }</div>
               </div>
               <div className="flex items-center gap-3">
                 <div className="font-bold">R$ {total.toFixed(2)}</div>
