@@ -66,6 +66,20 @@ export default function CategoryTable({ items, refreshItems }: { items: Item[], 
 
   const parents = Array.from(new Set([...Object.keys(STATIC_CATEGORIES).map(k=>k.toUpperCase()), ...Object.keys(catMap), ...Object.keys(totalsByCategory)]))
   const [editingRow, setEditingRow] = useState<Item | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  async function handleDelete(row: Item){
+    try{
+      if (!confirm('Confirma exclusão deste lançamento?')) return
+      setDeletingId(row.id)
+      const { error } = await supabase.from('despesas').delete().eq('id', row.id)
+      if (error) throw error
+      // refresh data
+      refreshItems?.()
+    }catch(e:any){
+      alert('Erro ao deletar: ' + (e.message || JSON.stringify(e)))
+    }finally{ setDeletingId(null) }
+  }
 
   return (
     <div className="space-y-5">
@@ -133,8 +147,9 @@ export default function CategoryTable({ items, refreshItems }: { items: Item[], 
                                       <td className="px-3 py-2 whitespace-nowrap">{date}</td>
                                       <td className="px-3 py-2" style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
                                         <div style={{flex:1}}>{row.descricao ?? ''}</div>
-                                        <div style={{flex:'0 0 auto'}}>
+                                        <div style={{flex:'0 0 auto', display:'flex', gap:8}}>
                                           <button className="btn-ghost" onClick={(e)=>{ e.stopPropagation(); setEditingRow(row) }} aria-label="Editar lançamento">✏️</button>
+                                          <button className="btn-ghost" style={{color:'#ef4444'}} onClick={(e)=>{ e.stopPropagation(); handleDelete(row) }} aria-label="Excluir lançamento" disabled={deletingId===row.id}>{deletingId===row.id ? '...' : '🗑️'}</button>
                                         </div>
                                       </td>
                                       <td className="px-3 py-2 text-right font-semibold">R$ {Number(row.valor||0).toFixed(2)}</td>
