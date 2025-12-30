@@ -30,61 +30,60 @@ export default function DashboardPage() {
   const [total, setTotal] = useState<number>(0)
   const [prevTotal, setPrevTotal] = useState<number>(0)
 
-  useEffect(() => {
-    async function load() {
-      const { start, end } = monthRange(selectedMonth)
-      try {
-        const { data, error } = await supabase
-          .from('despesas')
-          .select('id,categoria,subcategoria,descricao,valor,data,estabelecimento')
-          .gte('data', start)
-          .lte('data', end)
-          .order('data', { ascending: false })
+  async function fetchItems(month = selectedMonth) {
+    const { start, end } = monthRange(month)
+    try {
+      const { data, error } = await supabase
+        .from('despesas')
+        .select('id,categoria,subcategoria,descricao,valor,data,estabelecimento')
+        .gte('data', start)
+        .lte('data', end)
+        .order('data', { ascending: false })
 
-        if (error) {
-          console.log('supabase error', error)
-          setItems([])
-          setTotal(0)
-        } else {
-          const parsed = (data || []).map((r: any) => ({
-            id: r.id,
-            categoria: r.categoria,
-            subcategoria: r.subcategoria,
-            descricao: r.descricao,
-            valor: Number(r.valor || 0),
-            data: r.data,
-            estabelecimento: r.estabelecimento
-          }))
-          setItems(parsed)
-          setTotal(parsed.reduce((s:any, it:any) => s + Number(it.valor || 0), 0))
-        }
-
-        // previous month
-        const [y, m] = selectedMonth.split('-').map(Number)
-        const prevDate = new Date(y, m-2, 1) // month-2 gives previous month (Date month is 0-indexed)
-        const prevMonth = `${prevDate.getFullYear()}-${String(prevDate.getMonth()+1).padStart(2,'0')}`
-        const { start: pstart, end: pend } = monthRange(prevMonth)
-        const { data: pData, error: pErr } = await supabase
-          .from('despesas')
-          .select('valor')
-          .gte('data', pstart)
-          .lte('data', pend)
-
-        if (pErr) {
-          setPrevTotal(0)
-        } else {
-          setPrevTotal((pData || []).reduce((s:any, r:any) => s + Number(r.valor || 0), 0))
-        }
-
-      } catch (e) {
-        console.error(e)
+      if (error) {
+        console.log('supabase error', error)
         setItems([])
         setTotal(0)
-        setPrevTotal(0)
+      } else {
+        const parsed = (data || []).map((r: any) => ({
+          id: r.id,
+          categoria: r.categoria,
+          subcategoria: r.subcategoria,
+          descricao: r.descricao,
+          valor: Number(r.valor || 0),
+          data: r.data,
+          estabelecimento: r.estabelecimento
+        }))
+        setItems(parsed)
+        setTotal(parsed.reduce((s:any, it:any) => s + Number(it.valor || 0), 0))
       }
+
+      // previous month
+      const [y, m] = month.split('-').map(Number)
+      const prevDate = new Date(y, m-2, 1) // month-2 gives previous month (Date month is 0-indexed)
+      const prevMonth = `${prevDate.getFullYear()}-${String(prevDate.getMonth()+1).padStart(2,'0')}`
+      const { start: pstart, end: pend } = monthRange(prevMonth)
+      const { data: pData, error: pErr } = await supabase
+        .from('despesas')
+        .select('valor')
+        .gte('data', pstart)
+        .lte('data', pend)
+
+      if (pErr) {
+        setPrevTotal(0)
+      } else {
+        setPrevTotal((pData || []).reduce((s:any, r:any) => s + Number(r.valor || 0), 0))
+      }
+
+    } catch (e) {
+      console.error(e)
+      setItems([])
+      setTotal(0)
+      setPrevTotal(0)
     }
-    load()
-  }, [selectedMonth])
+  }
+
+  useEffect(() => { fetchItems(selectedMonth) }, [selectedMonth])
 
   const diff = total - prevTotal
   const diffPct = prevTotal === 0 ? (total === 0 ? 0 : 100) : (diff / prevTotal) * 100
@@ -112,7 +111,8 @@ export default function DashboardPage() {
 
       <div className="mx-auto max-w-[648px]">
         <h3 className="text-lg font-semibold mb-3" style={{textAlign:'center'}}>Categorias</h3>
-        <CategoryTable items={items} />
+-        <CategoryTable items={items} />
++        <CategoryTable items={items} refreshItems={fetchItems} />
       </div>
     </section>
   )

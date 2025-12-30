@@ -8,6 +8,7 @@
   --card: #ffffff;
   --muted: #6b7280;
   --accent: #10b981;
+  --accent-2: #059d97;
   --rhythm: 0.72rem;
   --text: #0f172a;
 }
@@ -17,6 +18,9 @@ html, body, #__next {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Use border-box everywhere to avoid unexpected width calculations */
+*, *::before, *::after { box-sizing: border-box; }
 
 body{
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
@@ -66,7 +70,7 @@ body{
 .muted { color: var(--muted); }
 
 /* Buttons */
-.btn-primary { background: linear-gradient(180deg,var(--accent), #059d97); color: white; padding: 0.8rem 1rem; border-radius: 12px; font-weight: 700; box-shadow: 0 8px 18px rgba(14,165,164,0.12); border: none; }
+.btn-primary { background: linear-gradient(180deg,var(--accent), var(--accent-2)); color: white; padding: 0.8rem 1rem; border-radius: 12px; font-weight: 700; box-shadow: 0 8px 18px rgba(0,0,0,0.08); border: none; }
 .btn-primary:active{ transform: translateY(1px); }
 .btn-ghost { background: transparent; color: var(--text); padding: 0.4rem 0.6rem; border-radius: 10px; }
 
@@ -92,10 +96,10 @@ input, textarea, select { background: #fbfbfd; border-radius: 12px; padding: 0.7
 .bottom-nav { position: fixed; left: 50%; transform: translateX(-50%); bottom: env(safe-area-inset-bottom, 12px); width: calc(100% - 32px); max-width:414px; display:flex; justify-content:center; align-items:center; gap:0.5rem; z-index:50; }
 .bottom-nav .bar { display:flex; gap:0.5rem; background: rgba(255,255,255,0.98); padding:0.28rem; border-radius: 999px; box-shadow: 0 14px 34px rgba(12,12,12,0.14); backdrop-filter: blur(6px); }
 .bottom-nav a { display:flex; align-items:center; gap:0.5rem; padding:0.4rem 0.9rem; border-radius: 999px; color:var(--muted); font-weight:700; font-size:0.92rem }
-.bottom-nav a.active { color: white; background: linear-gradient(180deg,var(--accent), #059d97); box-shadow: 0 12px 22px rgba(16,185,129,0.18) }
+.bottom-nav a.active { color: white; background: linear-gradient(180deg,var(--accent), var(--accent-2)); box-shadow: 0 12px 22px rgba(0,0,0,0.08) }
 /* central add button */
 .bottom-nav .center { position:relative }
-.bottom-nav .center .plus { width:64px; height:64px; border-radius:999px; background:var(--accent); display:inline-flex; align-items:center; justify-content:center; color:white; font-size:24px; box-shadow: 0 12px 30px rgba(16,185,129,0.18); transform: translateY(-18px); }
+.bottom-nav .center .plus { width:64px; height:64px; border-radius:999px; background:var(--accent); display:inline-flex; align-items:center; justify-content:center; color:white; font-size:24px; box-shadow: 0 12px 30px rgba(0,0,0,0.10); transform: translateY(-18px); }
 
 
 /* Helpful helpers */
@@ -107,27 +111,27 @@ input, textarea, select { background: #fbfbfd; border-radius: 12px; padding: 0.7
 .subgroup { padding: 0.6rem 0; border-radius: 10px; }
 .subheader { display:flex; align-items:center; justify-content:space-between; padding: 0.35rem 0; gap:12px; }
 .sub-title { font-weight:700; font-size:0.97rem; color:var(--text); }
-.subdetails { background: rgba(15,23,42,0.03); border-radius:10px; padding:0.6rem; margin-top:0.5rem; }
+.subdetails { background: rgba(15,23,42,0.03); border-radius:10px; padding:0.6rem; margin-top:0.5rem; overflow:hidden }
 .table-row { border-bottom: 1px solid rgba(15,23,42,0.04); }
 .table-row:last-child { border-bottom: none; }
 .description { color: var(--text); white-space: normal; }
 
 /* Accent bar on the left of each category card (like the mock) */
 .category-card { position: relative; box-sizing: border-box; }
-.category-card::before { content: ''; position: absolute; left: 12px; top: 14px; bottom: 14px; width: 4px; border-radius: 4px; background: linear-gradient(180deg,var(--accent), #059d97); opacity:0.98 }
+.category-card::before { content: ''; position: absolute; left: 12px; top: 14px; bottom: 14px; width: 4px; border-radius: 4px; background: linear-gradient(180deg,var(--accent), var(--accent-2)); opacity:0.98 }
 
 /* Mobile-friendly subdetails: make rows flex so long descriptions don't overflow */
 .subdetails table { border-collapse: separate; border-spacing: 0 8px; width:100% }
 .subdetails thead tr { display:none }
-.subdetails tbody tr { display:flex; gap:10px; align-items:center; background: white; border-radius:8px; box-shadow: 0 6px 18px rgba(12,12,12,0.03); padding: 0.45rem 0.5rem; }
-.subdetails td { padding: 0; vertical-align: middle; display:block; }
+.subdetails tbody tr { display:flex; gap:6px; align-items:center; background: white; border-radius:8px; box-shadow: 0 6px 18px rgba(12,12,12,0.03); padding: 0.35rem 0.4rem; flex-wrap:nowrap }
+.subdetails td { padding: 0; vertical-align: middle; display:block; min-width:0 }
 .subdetails td:nth-child(1) { flex: 0 0 62px; width:62px; color:var(--muted); font-size:0.92rem; white-space:nowrap }
-.subdetails td:nth-child(2) { flex: 1 1 140px; min-width:0; max-width:220px; padding-left:6px; font-size:0.95rem; overflow-wrap:anywhere }
-.subdetails td:nth-child(3) { flex: 0 0 56px; width:56px; text-align:center; font-weight:700; display:flex; align-items:center; justify-content:center }
+.subdetails td:nth-child(2) { flex: 1 1 120px; min-width:0; max-width:180px; padding-left:4px; font-size:0.95rem; overflow-wrap:anywhere }
+.subdetails td:nth-child(3) { flex: 0 0 30px; width:30px; text-align:center; font-weight:700; display:flex; align-items:center; justify-content:center }
 .subdetails td.description { color: #111827; overflow-wrap: anywhere }
 
 /* Constrain and center the detail card inside each subcategory */
-.subdetails .card { width: 100%; max-width: 648px; margin: 0.35rem auto; padding: 0.6rem; box-shadow: 0 8px 22px rgba(12,12,12,0.04); }
+.subdetails .card { width: 100%; max-width: 648px; margin: 0.35rem auto; padding: 0.6rem; box-shadow: 0 8px 22px rgba(12,12,12,0.04); overflow:hidden; box-sizing:border-box }
 .subdetails .card table { width: 100%; }
 
 /* Smaller chevrons and tighter ghost buttons to save horizontal space */
@@ -152,8 +156,8 @@ input, textarea, select { background: #fbfbfd; border-radius: 12px; padding: 0.7
 /* Table cosmetics inside subdetails */
 .subdetails table { border-collapse: separate; border-spacing: 0 8px; width:100% }
 .subdetails thead tr { display:none }
-.subdetails tbody tr { background: white; border-radius:8px; box-shadow: 0 6px 18px rgba(12,12,12,0.03); }
-.subdetails td { padding: 0.7rem 0.6rem; vertical-align: middle }
+.subdetails tbody tr { display:flex; gap:6px; align-items:center; background: white; border-radius:8px; box-shadow: 0 6px 18px rgba(12,12,12,0.03); flex-wrap:nowrap }
+.subdetails td { padding: 0.5rem 0.5rem; vertical-align: middle; min-width:0 }
 .subdetails td.description { color: #111827 }
 
 
