@@ -101,19 +101,28 @@ export default function CategoryTable({ items, refreshItems }: { items: Item[], 
   const _seen = new Set<string>()
   parents.forEach(p => { if (!_seen.has(p)) { _seen.add(p); uniqueParents.push(p) } })
 
+  // Merge parents by display name to avoid duplicates that differ only by normalization
+  const mergedByDisplay: Record<string, { total: number, rows: Item[] }> = {}
+  uniqueParents.forEach(parent => {
+    const displayName = (typeof window !== 'undefined' && (window as any).__CAT_DISPLAY__ && (window as any).__CAT_DISPLAY__[parent]) || displayNameMap[parent] || parent
+    if (!mergedByDisplay[displayName]) mergedByDisplay[displayName] = { total: 0, rows: [] }
+    mergedByDisplay[displayName].total += (totalsByCategory[parent] || 0)
+    mergedByDisplay[displayName].rows.push(...(detailsByCategory[parent] || []))
+  })
+
+  const mergedParents = Object.keys(mergedByDisplay).map(name => ({ name, total: mergedByDisplay[name].total, rows: mergedByDisplay[name].rows }))
+
   // client-side diagnostic logging to investigate duplication in production
   if (typeof window !== 'undefined') {
     try {
       const counts: Record<string, number> = {}
-      uniqueParents.forEach(p => counts[p] = (counts[p] || 0) + 1)
+      mergedParents.forEach(p => counts[p.name] = (counts[p.name] || 0) + 1)
       const dupes = Object.entries(counts).filter(([,c])=>c>1)
-      if (dupes.length) console.warn('CategoryTable duplicate parents', dupes)
+      if (dupes.length) console.warn('CategoryTable duplicate parents after merge', dupes)
       // print a compact report: parent display name + count + first 5 ids under it
       const byCounts: Record<string, {count:number, ids:string[]}> = {}
-      Object.keys(detailsByCategory || {}).forEach(k => {
-        byCounts[k] = { count: (detailsByCategory[k]||[]).length, ids: (detailsByCategory[k]||[]).slice(0,5).map(r=>r.id) }
-      })
-      console.info('CategoryTable report', { parents: uniqueParents, totals: Object.keys(totalsByCategory).length, details: byCounts })
+      mergedParents.forEach(p => { byCounts[p.name] = { count: (p.rows||[]).length, ids: (p.rows||[]).slice(0,5).map(r=>r.id) } })
+      console.info('CategoryTable report (merged)', { parents: mergedParents.map(p=>p.name), totals: Object.keys(totalsByCategory).length, details: byCounts })
     } catch (e){ console.error('CategoryTable diagnostic error', e) }
   }
 
@@ -135,9 +144,10 @@ export default function CategoryTable({ items, refreshItems }: { items: Item[], 
 
   return (
     <div className="space-y-5">
-      {uniqueParents.map(parent => {
-        const total = totalsByCategory[parent] ?? 0
-        const rows = detailsByCategory[parent] || []
+      {mergedParents.map(parentObj => {
+        const parent = parentObj.name
+        const total = parentObj.total ?? 0
+        const rows = parentObj.rows || []
 
         // group rows by subcategoria
         const subTotals: Record<string, number> = {}
