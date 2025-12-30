@@ -72,7 +72,7 @@ export default function CategoryTable({ items, refreshItems }: { items: Item[], 
     const rawCat = it.categoria || 'Sem categoria'
     let key = normalizeKey(rawCat)
     // if there is a reverse mapping from subcategory to parent key (set during loadCats), use it
-    const reverse = (window as any).__CAT_REVERSE__ as Record<string,string> | undefined
+    const reverse = (typeof window !== 'undefined') ? (window as any).__CAT_REVERSE__ as Record<string,string> | undefined : undefined
     if (reverse){
       const maybe = reverse[normalizeKey(key)]
       if (maybe) key = maybe
@@ -96,8 +96,8 @@ export default function CategoryTable({ items, refreshItems }: { items: Item[], 
 
   const parents = Array.from(new Set(orderedKeys))
 
-  // debug: log parents and duplicates
-  if (process.env.NODE_ENV !== 'production') {
+  // debug: log parents and duplicates (avoid running on server if window is undefined)
+  if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
     try {
       const counts: Record<string, number> = {}
       parents.forEach(p => counts[p] = (counts[p] || 0) + 1)
@@ -143,7 +143,7 @@ export default function CategoryTable({ items, refreshItems }: { items: Item[], 
           <div key={parent} className="card category-card">
             <div className="collapse-header cursor-pointer" onClick={() => setOpen(prev => ({...prev, [parent]: !prev[parent]}))}>
               <div>
-                <div className="font-extrabold text-lg">{ ((window as any).__CAT_DISPLAY__ && (window as any).__CAT_DISPLAY__[parent]) || displayNameMap[parent] || parent }</div>
+                <div className="font-extrabold text-lg">{ (typeof window !== 'undefined' && (window as any).__CAT_DISPLAY__ && (window as any).__CAT_DISPLAY__[parent]) || displayNameMap[parent] || parent }</div>
               </div>
               <div className="flex items-center gap-3">
                 <div className="font-bold">R$ {total.toFixed(2)}</div>
