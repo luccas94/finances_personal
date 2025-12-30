@@ -45,7 +45,7 @@ export default function DashboardPage() {
         setItems([])
         setTotal(0)
       } else {
-        const parsed = (data || []).map((r: any) => ({
+        const parsed: Despesa[] = (data || []).map((r: any) => ({
           id: r.id,
           categoria: r.categoria,
           subcategoria: r.subcategoria,
@@ -57,7 +57,7 @@ export default function DashboardPage() {
         // dedupe by id in case the query returns duplicates
         const uniqueMap = new Map(parsed.map(p => [p.id, p]))
         const unique = Array.from(uniqueMap.values())
-        setItems(unique)
+        setItems(unique as Despesa[])
         setTotal(unique.reduce((s:any, it:any) => s + Number(it.valor || 0), 0))
       }
 
