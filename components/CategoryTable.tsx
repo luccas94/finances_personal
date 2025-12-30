@@ -25,7 +25,8 @@ const STATIC_CATEGORIES: Record<string, string[]> = {
 
 function normalizeKey(s?: string){
   if (!s) return 'SEM_CATEGORIA'
-  return s.toString().normalize('NFKD').replace(/\p{Diacritic}/gu, '').trim().toUpperCase()
+  // normalize and strip combining diacritic marks using Unicode range (compatible with older TS targets)
+  return s.toString().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').trim().toUpperCase()
 }
 
 export default function CategoryTable({ items, refreshItems }: { items: Item[], refreshItems?: (month?: string) => void }){
