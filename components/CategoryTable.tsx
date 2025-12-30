@@ -96,14 +96,19 @@ export default function CategoryTable({ items, refreshItems }: { items: Item[], 
 
   const parents = Array.from(new Set(orderedKeys))
 
+  // ensure final parents are unique and preserve order (defensive guard)
+  const uniqueParents: string[] = []
+  const _seen = new Set<string>()
+  parents.forEach(p => { if (!_seen.has(p)) { _seen.add(p); uniqueParents.push(p) } })
+
   // debug: log parents and duplicates (avoid running on server if window is undefined)
   if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
     try {
       const counts: Record<string, number> = {}
-      parents.forEach(p => counts[p] = (counts[p] || 0) + 1)
+      uniqueParents.forEach(p => counts[p] = (counts[p] || 0) + 1)
       const dupes = Object.entries(counts).filter(([,c])=>c>1)
       if (dupes.length) console.warn('Duplicate parents found', dupes)
-      console.debug('CategoryTable parents', parents.length, parents)
+      console.debug('CategoryTable parents', uniqueParents.length, uniqueParents)
     } catch (_) {}
   }
 
@@ -125,7 +130,7 @@ export default function CategoryTable({ items, refreshItems }: { items: Item[], 
 
   return (
     <div className="space-y-5">
-      {parents.map(parent => {
+      {uniqueParents.map(parent => {
         const total = totalsByCategory[parent] ?? 0
         const rows = detailsByCategory[parent] || []
 
