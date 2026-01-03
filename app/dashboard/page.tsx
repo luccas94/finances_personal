@@ -88,13 +88,36 @@ export default function DashboardPage() {
 
   useEffect(() => { fetchItems(selectedMonth) }, [selectedMonth])
 
+  function generateMonths(count = 12){
+    const res: { value: string, label: string }[] = []
+    const names = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+    const now = new Date()
+    for(let i=0;i<count;i++){
+      const d = new Date(now.getFullYear(), now.getMonth()-i, 1)
+      const v = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`
+      res.push({ value: v, label: `${names[d.getMonth()]} ${d.getFullYear()}` })
+    }
+    return res
+  }
+
   const diff = total - prevTotal
   const diffPct = prevTotal === 0 ? (total === 0 ? 0 : 100) : (diff / prevTotal) * 100
 
   return (
     <section>
       <div className="mx-auto max-w-[648px] mb-6">
-        <h2 className="text-xl font-semibold mb-4" style={{textAlign:'center'}}>Dashboard</h2>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12}}>
+          <h2 className="text-xl font-semibold mb-4">Dashboard</h2>
+
+          <div>
+            <label htmlFor="month-select" className="text-sm muted mr-2">Mês</label>
+            <select id="month-select" value={selectedMonth} onChange={(e)=>setSelectedMonth(e.target.value)} className="input">
+              {generateMonths(12).map(m => (
+                <option key={m.value} value={m.value}>{m.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
 
         <div className="cards-strip">
           <div className="card" style={{flex: '0 0 200px', maxWidth: '200px'}}>
@@ -114,8 +137,7 @@ export default function DashboardPage() {
 
       <div className="mx-auto max-w-[648px]">
         <h3 className="text-lg font-semibold mb-3" style={{textAlign:'center'}}>Categorias</h3>
--        <CategoryTable items={items} />
-+        <CategoryTable items={items} refreshItems={fetchItems} />
+        <CategoryTable items={items} refreshItems={fetchItems} />
       </div>
     </section>
   )

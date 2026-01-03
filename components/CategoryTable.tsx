@@ -114,6 +114,37 @@ export default function CategoryTable({ items, refreshItems }: { items: Item[], 
 
   const mergedParents = Object.keys(mergedByDisplayKey).map(k => ({ key: k, name: mergedByDisplayKey[k].label.trim(), total: mergedByDisplayKey[k].total, rows: mergedByDisplayKey[k].rows, sources: Array.from(new Set(mergedByDisplayKey[k].sources)) }))
 
+  // normalize/merge display names and filter problematic single-char labels (e.g. '+' / '-')
+  const normalizedMap = new Map<string, { key: string, name: string, total: number, rows: Item[], sources: string[] }>()
+  mergedParents.forEach(p => {
+    const raw = (p.name || '').toString()
+    const stripped = raw.replace(/[^\w\s]/g, '').trim().toUpperCase() // remove punctuation
+    const normKey = stripped || 'SEM_CATEGORIA'
+    if (!normalizedMap.has(normKey)) {
+      normalizedMap.set(normKey, { key: normKey, name: stripped || 'SEM CATEGORIA', total: p.total || 0, rows: Array.from(p.rows || []), sources: Array.from(p.sources || []) })
+    } else {
+      const ex = normalizedMap.get(normKey)!
+      ex.total = (ex.total || 0) + (p.total || 0)
+      ex.rows.push(...(p.rows || []))
+      ex.sources = Array.from(new Set([...(ex.sources||[]), ...(p.sources||[])]))
+    }
+  })
+  const finalParents = Array.from(normalizedMap.values())
+
+  // final visible parents: remove labels that are only punctuation (e.g. '+' or '-') or empty,
+  // and ensure uniqueness by name (keep first occurrence)
+  const visibleParents: typeof finalParents = []
+  const seenNames = new Set<string>()
+  finalParents.forEach(p => {
+    const name = (p.name || '').toString().trim()
+    if (!name) return
+    if (/^[+\-\s]+$/.test(name)) return
+    const up = name.toUpperCase()
+    if (seenNames.has(up)) return
+    seenNames.add(up)
+    visibleParents.push(p)
+  })
+
   // client-side diagnostic logging to investigate duplication in production
   if (typeof window !== 'undefined') {
     try {
@@ -149,7 +180,7 @@ export default function CategoryTable({ items, refreshItems }: { items: Item[], 
 
   return (
     <div className="space-y-5">
-      {mergedParents.map(parentObj => {
+      {finalParents.map(parentObj => {
         const parent = parentObj.name
         const total = parentObj.total ?? 0
         const rows = parentObj.rows || []
@@ -165,7 +196,7 @@ export default function CategoryTable({ items, refreshItems }: { items: Item[], 
         })
 
         return (
-          <div key={parent} className="card category-card">
+          <div key={parentObj.key} className="card category-card">
             <div className="collapse-header cursor-pointer" onClick={() => setOpen(prev => ({...prev, [parent]: !prev[parent]}))}>
               <div>
                 <div className="font-extrabold text-lg">{ parent }</div>
